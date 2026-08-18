@@ -1,3 +1,5 @@
+import type { SakuraManagerLike } from "./types/sakura-worker";
+
 declare global {
 	interface HTMLElementTagNameMap {
 		"table-of-contents": HTMLElement & {
@@ -19,6 +21,9 @@ declare global {
 				}>;
 			}>;
 		};
+		/** 按需加载 pagefind.js，由 Navbar.astro 的内联脚本挂载；幂等 */
+		__loadPagefind?: () => Promise<void>;
+		__pagefindLoading?: Promise<void>;
 		__fireflyMusic?: {
 			init: () => Promise<void>;
 			getState: () => {
@@ -63,6 +68,10 @@ declare global {
 			playTrackByIndex: (index: number) => void;
 			loadTrack: (index: number, autoPlay: boolean) => void;
 		};
+		/** 樱花特效管理器,Worker 模式与主线程回退模式均实现该接口 */
+		sakuraManager?: SakuraManagerLike;
+		/** 樱花特效初始化守卫,确保只初始化一次(Swup 切页重跑脚本时复用) */
+		sakuraInitialized?: boolean;
 	}
 
 	interface MediaQueryList {

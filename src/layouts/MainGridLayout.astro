@@ -15,6 +15,7 @@ import TypewriterText from "@/components/features/TypewriterText.astro";
 import CategoryBar from "@/components/layout/CategoryBar.astro";
 import {
 	backgroundWallpaper,
+	displaySettingsConfig,
 	live2dWidgetConfig,
 	sidebarLayoutConfig,
 	siteConfig,
@@ -51,8 +52,10 @@ interface Props {
 	postSlug?: string;
 	postCategory?: string;
 	headings?: MarkdownHeading[];
+	encrypted?: boolean;
 	bannerPostMeta?: {
 		title: string;
+		description?: string;
 		published: Date;
 		updated?: Date;
 		words?: number;
@@ -71,6 +74,7 @@ const {
 	postSlug,
 	postCategory,
 	headings = [],
+	encrypted = false,
 	bannerPostMeta,
 } = Astro.props;
 
@@ -79,11 +83,11 @@ const isBannerMode = backgroundWallpaper.mode === "banner";
 const isFullscreenMode = backgroundWallpaper.mode === "fullscreen";
 const isOverlayMode = backgroundWallpaper.mode === "overlay";
 const isBackgroundEnabled = backgroundWallpaper.mode !== "none";
-const isWallpaperSwitchable = backgroundWallpaper.switchable ?? true;
+const isWallpaperSwitchable = displaySettingsConfig.wallpaperModeSwitchable;
 
 // 检查是否启用水波纹动画效果
 const wavesConfig = backgroundWallpaper.common?.waves?.enable;
-const wavesSwitchable = backgroundWallpaper.common?.waves?.switchable ?? false;
+const wavesSwitchable = displaySettingsConfig.wavesSwitchable;
 // 处理分设备控制的水波纹动画
 const wavesEnabledOnDesktop =
 	typeof wavesConfig === "object" ? wavesConfig.desktop : wavesConfig;
@@ -95,8 +99,7 @@ const shouldRenderWaves =
 
 // 渐变过渡配置
 const gradientConfig = backgroundWallpaper.common?.gradient?.enable;
-const gradientSwitchable =
-	backgroundWallpaper.common?.gradient?.switchable ?? false;
+const gradientSwitchable = displaySettingsConfig.gradientSwitchable;
 const gradientEnabledOnDesktop =
 	typeof gradientConfig === "object"
 		? gradientConfig.desktop
@@ -140,6 +143,30 @@ const showBannerPostMeta =
 	!isHomePageCheck &&
 	isPostPage &&
 	!!bannerPostMeta;
+
+const bannerPostInfoMode =
+	backgroundWallpaper.common?.postInfo?.mode ?? "description";
+
+const getBannerDescriptionWidth = (description?: string) => {
+	if (!description) return undefined;
+
+	const textUnits = Array.from(description).reduce((total, character) => {
+		if (/\s/u.test(character)) return total + 0.35;
+		const codePoint = character.codePointAt(0) ?? 0;
+		return total + (codePoint <= 0xff ? 0.55 : 1);
+	}, 0);
+	const maxLineUnits = 52;
+	const lineCount = Math.max(1, Math.ceil(textUnits / maxLineUnits));
+
+	if (lineCount === 1) return undefined;
+
+	const targetLineUnits = Math.min(maxLineUnits, textUnits / (lineCount - 0.5));
+	return `${Math.max(28, targetLineUnits).toFixed(1)}em`;
+};
+
+const bannerDescriptionWidth = getBannerDescriptionWidth(
+	bannerPostMeta?.description,
+);
 
 const showBannerDim = (isBannerMode || isFullscreenMode) && isBackgroundEnabled;
 const dimOpacity = backgroundWallpaper.common?.dimOpacity ?? 0.15;
@@ -265,8 +292,7 @@ const configQuality = getImageQuality();
 const mobileQuality = Math.round(configQuality * 0.9);
 const bannerCarouselEnabledDefault =
 	backgroundWallpaper.common?.carousel?.enable ?? false;
-const bannerCarouselSwitchable =
-	backgroundWallpaper.common?.carousel?.switchable ?? false;
+const bannerCarouselSwitchable = displaySettingsConfig.bannerCarouselSwitchable;
 const bannerCarouselInterval = Math.max(
 	backgroundWallpaper.common?.carousel?.interval ?? 5000,
 	3000,
@@ -277,7 +303,7 @@ const hasMultipleImages =
 	backgroundImages.desktop.length > 1 || backgroundImages.mobile.length > 1;
 ---
 
-<Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle} postSlug={postSlug}>
+<Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle} postSlug={postSlug} hasWallpaper={isWallpaperSwitchable || isBannerMode || isFullscreenMode || isOverlayMode}>
 
 
 <!-- 为全屏壁纸模式添加body类 -->
@@ -332,72 +358,155 @@ const hasMultipleImages =
          data-carousel-switchable={bannerCarouselSwitchable}
          data-carousel-interval={bannerCarouselInterval}
          data-carousel-effect={bannerCarouselEffect}>
+        {/* 图片放在 <template> 里，浏览器不会发起请求；由轮播脚本挑中随机那张后克隆进 DOM */}
         {backgroundImages.mobile.map((src, index) => (
             <div class:list={["slide-item block lg:hidden", index === 0 && "active"]} data-index={index}>
-                <ImageWrapper
-                    alt="Mobile background image of the blog"
-                    class="object-cover h-full w-full"
-                    src={src}
-                    position={backgroundWallpaper.banner?.position}
-                    widths={[640, 750, 1080]}
-                    sizes="100vw"
-                    loading={index === 0 ? "eager" : "lazy"}
-                    fetchpriority={index === 0 ? "high" : undefined}
-                    quality={mobileQuality}
-                />
+                <template>
+                    <ImageWrapper
+                        alt="Mobile background image of the blog"
+                        class="object-cover h-full w-full"
+                        src={src}
+                        position={backgroundWallpaper.banner?.position}
+                        width={828}
+                        widths={[640, 828]}
+                        sizes="100vw"
+                        loading="eager"
+                        quality={mobileQuality}
+                    />
+                </template>
             </div>
         ))}
         {backgroundImages.desktop.map((src, index) => (
             <div class:list={["slide-item hidden lg:block", index === 0 && "active"]} data-index={index}>
-                <ImageWrapper
-                    id="banner"
-                    alt="Desktop background image of the blog"
-                    class="object-cover h-full"
-                    src={src}
-                    position={backgroundWallpaper.banner?.position}
-                    widths={[1280, 1920, 2560]}
-                    sizes="100vw"
-                    loading={index === 0 ? "eager" : "lazy"}
-                    fetchpriority={index === 0 ? "high" : undefined}
-                    quality={configQuality}
-                />
+                <template>
+                    <ImageWrapper
+                        id="banner"
+                        alt="Desktop background image of the blog"
+                        class="object-cover h-full"
+                        src={src}
+                        position={backgroundWallpaper.banner?.position}
+                        width={1920}
+                        widths={[1280, 1920]}
+                        sizes="100vw"
+                        loading="eager"
+                        quality={configQuality}
+                    />
+                </template>
             </div>
         ))}
+        <noscript>
+            {backgroundImages.mobile.length > 0 && (
+                <div class="slide-item active block lg:hidden">
+                    <ImageWrapper
+                        alt="Mobile background image of the blog"
+                        class="object-cover h-full w-full"
+                        src={backgroundImages.mobile[0]}
+                        position={backgroundWallpaper.banner?.position}
+                        width={828}
+                        widths={[640, 828]}
+                        sizes="100vw"
+                        loading="eager"
+                        fetchpriority="high"
+                        fadeIn={false}
+                        quality={mobileQuality}
+                    />
+                </div>
+            )}
+            {backgroundImages.desktop.length > 0 && (
+                <div class="slide-item active hidden lg:block">
+                    <ImageWrapper
+                        alt="Desktop background image of the blog"
+                        class="object-cover h-full"
+                        src={backgroundImages.desktop[0]}
+                        position={backgroundWallpaper.banner?.position}
+                        width={1920}
+                        widths={[1280, 1920]}
+                        sizes="100vw"
+                        loading="eager"
+                        fetchpriority="high"
+                        fadeIn={false}
+                        quality={configQuality}
+                    />
+                </div>
+            )}
+        </noscript>
     </div>
     ) : (
     /* 单图模式 */
     <div class="relative h-full w-full" id="banner-images-container">
+        {/* 两侧都放在 <template> 里，由下面的脚本按 matchMedia 只实例化匹配的那一侧，
+            避免桌面端白下一张手机图（display:none 挡不住 loading="eager"） */}
         {backgroundImages.mobile.length > 0 && (
-            <div class="banner-image-slot-mobile absolute inset-0 block lg:hidden">
-                <ImageWrapper
-                    alt="Mobile background image of the blog"
-                    class="object-cover h-full w-full"
-                    src={backgroundImages.mobile[0]}
-                    position={backgroundWallpaper.banner?.position}
-                    widths={[640, 750, 1080]}
-                    sizes="100vw"
-                    loading="eager"
-                    fetchpriority="high"
-                    quality={mobileQuality}
-                />
+            <div class="banner-image-slot absolute inset-0 block lg:hidden">
+                <template>
+                    <ImageWrapper
+                        alt="Mobile background image of the blog"
+                        class="object-cover h-full w-full"
+                        src={backgroundImages.mobile[0]}
+                        position={backgroundWallpaper.banner?.position}
+                        width={828}
+                        widths={[640, 828]}
+                        sizes="100vw"
+                        loading="eager"
+                        quality={mobileQuality}
+                    />
+                </template>
             </div>
         )}
         {backgroundImages.desktop.length > 0 && (
-            <div class="banner-image-slot-desktop absolute inset-0 hidden lg:block">
-                <ImageWrapper
-                    id="banner"
-                    alt="Desktop background image of the blog"
-                    class="object-cover h-full"
-                    src={backgroundImages.desktop[0]}
-                    position={backgroundWallpaper.banner?.position}
-                    widths={[1280, 1920, 2560]}
-                    sizes="100vw"
-                    loading="eager"
-                    fetchpriority="high"
-                    quality={configQuality}
-                />
+            <div class="banner-image-slot absolute inset-0 hidden lg:block">
+                <template>
+                    <ImageWrapper
+                        id="banner"
+                        alt="Desktop background image of the blog"
+                        class="object-cover h-full"
+                        src={backgroundImages.desktop[0]}
+                        position={backgroundWallpaper.banner?.position}
+                        width={1920}
+                        widths={[1280, 1920]}
+                        sizes="100vw"
+                        loading="eager"
+                        quality={configQuality}
+                    />
+                </template>
             </div>
         )}
+        <noscript>
+            {backgroundImages.mobile.length > 0 && (
+                <div class="absolute inset-0 block lg:hidden">
+                    <ImageWrapper
+                        alt="Mobile background image of the blog"
+                        class="object-cover h-full w-full"
+                        src={backgroundImages.mobile[0]}
+                        position={backgroundWallpaper.banner?.position}
+                        width={828}
+                        widths={[640, 828]}
+                        sizes="100vw"
+                        loading="eager"
+                        fetchpriority="high"
+                        fadeIn={false}
+                        quality={mobileQuality}
+                    />
+                </div>
+            )}
+            {backgroundImages.desktop.length > 0 && (
+                <div class="absolute inset-0 hidden lg:block">
+                    <ImageWrapper
+                        alt="Desktop background image of the blog"
+                        class="object-cover h-full"
+                        src={backgroundImages.desktop[0]}
+                        position={backgroundWallpaper.banner?.position}
+                        width={1920}
+                        widths={[1280, 1920]}
+                        sizes="100vw"
+                        loading="eager"
+                        fetchpriority="high"
+                        fadeIn={false}
+                        quality={configQuality}
+                    />
+                </div>
+            )}
+        </noscript>
     </div>
     )}
 
@@ -413,26 +522,7 @@ const hasMultipleImages =
             var switchable = container.dataset.carouselSwitchable === 'true';
             var defaultEnabled = container.dataset.carouselEnabled === 'true';
             var effect = container.dataset.carouselEffect || 'fade';
-            var FADE_MS = 800;
             var transitioning = false;
-
-            // 创建过渡遮罩（用于 kenburns 效果的 LQIP 桥接）
-            var overlay = null;
-            if (effect === 'kenburns') {
-                overlay = document.createElement('div');
-                overlay.style.cssText = 'position:absolute;inset:0;z-index:20;opacity:0;pointer-events:none;transition:opacity ' + (FADE_MS / 2) + 'ms ease-in-out;background-size:cover;background-position:center;';
-                container.appendChild(overlay);
-            }
-
-            // 从 slide-item 中提取 LQIP 渐变样式
-            function getSlideLqipStyle(slide) {
-                var ph = slide.querySelector('.lqip-placeholder');
-                if (ph) {
-                    var bg = ph.style.background || ph.style.backgroundImage;
-                    if (bg) return bg;
-                }
-                return '#000';
-            }
 
             function isCarouselEnabled() {
                 if (!switchable) return defaultEnabled;
@@ -444,6 +534,59 @@ const hasMultipleImages =
             function isBannerWallpaperMode() {
                 var mode = document.documentElement.getAttribute('data-wallpaper-mode');
                 return mode === WALLPAPER_BANNER || mode === 'fullscreen';
+            }
+
+            // 图片淡入：Layout 里的全局 initImageLoadFadeIn 只在解析期扫一次，
+            // 之后克隆进来的图片得自己接管，否则会一直停在 opacity-0
+            function fadeInWhenLoaded(root) {
+                var ph = root.querySelector('.lqip-placeholder');
+                var img = root.querySelector('img');
+                if (!img) return;
+                function done() {
+                    img.style.opacity = '1';
+                    if (ph) ph.classList.add('loaded');
+                }
+                if (img.complete && img.naturalWidth > 0) {
+                    done();
+                } else {
+                    img.addEventListener('load', done, { once: true });
+                    img.addEventListener('error', function () {
+                        if (ph) ph.classList.add('loaded');
+                    }, { once: true });
+                }
+            }
+
+            // 把 <template> 里的图片实例化进 DOM —— 插入的那一刻才开始下载
+            function materialize(slideEl, high) {
+                if (!slideEl) return false;
+                var tpl = slideEl.querySelector('template');
+                if (!tpl) return false;
+                var frag = tpl.content.cloneNode(true);
+                if (high) {
+                    var img = frag.querySelector('img');
+                    // 必须在插入前写，插入即发起请求
+                    if (img) {
+                        img.setAttribute('fetchpriority', 'high');
+                        // 这张是 LCP 元素，不做淡入：图片没下完时 <img> 本来就不画东西，
+                        // 那 500ms 过渡只是把已经能看的画面又藏半秒，Chrome 会把 LCP 往后记。
+                        img.classList.remove('opacity-0', 'transition-opacity', 'duration-500', 'ease-out');
+                        img.style.opacity = '1';
+                    }
+                    // LQIP 占位层是 absolute + z-index:0，盖在 img 上面，
+                    // 它那 0.5s 淡出同样会挡住 LCP
+                    var ph = frag.querySelector('.lqip-placeholder');
+                    if (ph) ph.style.transition = 'none';
+                }
+                slideEl.appendChild(frag);
+                tpl.remove();
+                fadeInWhenLoaded(slideEl);
+                return true;
+            }
+
+            // 预取下一张，避免切换时闪一帧黑
+            function materializeAhead(slides, index) {
+                if (slides.length < 2) return;
+                materialize(slides[(index + 1) % slides.length], false);
             }
 
             // 获取当前设备可见的 slide-item
@@ -478,9 +621,19 @@ const hasMultipleImages =
                         if (i < nextIndex) slides[i].classList.add('prev-waiting');
                     }
                 }
-                for (var j = 0; j < slides.length; j++) {
-                    if (j === nextIndex) slides[j].classList.add('active');
-                    else slides[j].classList.remove('active');
+                if (effect === 'kenburns') {
+                    // Ken Burns: 交叉淡入淡出，先激活新图再隐藏旧图
+                    slides[nextIndex].classList.add('active');
+                    requestAnimationFrame(function() {
+                        for (var j = 0; j < slides.length; j++) {
+                            if (j !== nextIndex) slides[j].classList.remove('active');
+                        }
+                    });
+                } else {
+                    for (var j = 0; j < slides.length; j++) {
+                        if (j === nextIndex) slides[j].classList.add('active');
+                        else slides[j].classList.remove('active');
+                    }
                 }
             }
 
@@ -496,23 +649,12 @@ const hasMultipleImages =
                 var currentIndex = getCurrentIndex(slides);
                 if (nextIndex === currentIndex) return;
 
-                if (effect === 'kenburns' && overlay) {
-                    // Ken Burns: 用下一张图的 LQIP 做桥接过渡
-                    transitioning = true;
-                    overlay.style.background = getSlideLqipStyle(slides[nextIndex]);
-                    overlay.style.opacity = '1';
-                    setTimeout(function() {
-                        applySlideChange(slides, nextIndex);
-                        // 等新图 Ken Burns 动画开始后再移除遮罩
-                        setTimeout(function() {
-                            overlay.style.opacity = '0';
-                            transitioning = false;
-                        }, 150);
-                    }, FADE_MS / 2);
-                } else {
-                    // 其他效果：直接切换（CSS transition 处理）
-                    applySlideChange(slides, nextIndex);
-                }
+                // 目标图可能还躺在 <template> 里，先实例化再切
+                materialize(slides[nextIndex], false);
+                materializeAhead(slides, nextIndex);
+
+                // 直接切换（CSS 处理过渡动画）
+                applySlideChange(slides, nextIndex);
 
                 if (resetProgress !== false && appState.isPlaying) {
                     startAutoPlay();
@@ -590,19 +732,120 @@ const hasMultipleImages =
                 }
             });
 
-            // 随机首张
+            // 随机首张：只有被抽中的这一张会真的下载，其余仍留在 <template> 里
             var slides = getVisibleSlides();
-            if (slides.length > 1) {
-                var randomIdx = Math.floor(Math.random() * slides.length);
-                for (var k = 0; k < slides.length; k++) {
-                    if (k === randomIdx) slides[k].classList.add('active');
-                    else slides[k].classList.remove('active');
-                }
+            var startIdx = slides.length > 1 ? Math.floor(Math.random() * slides.length) : 0;
+            var firstSlide = slides[startIdx];
+            // .slide-item 自带 1000ms 的 opacity 过渡，首张不该吃它（它是 LCP 元素）。
+            // 必须在下面加 active 之前就关掉，否则过渡已经启动了。
+            if (firstSlide) firstSlide.style.transition = 'none';
+            for (var k = 0; k < slides.length; k++) {
+                if (k === startIdx) slides[k].classList.add('active');
+                else slides[k].classList.remove('active');
+            }
+            materialize(firstSlide, true);
+            if (firstSlide) {
+                // 下一帧再放开，后续轮播切换的交叉淡入照旧。双 rAF 是为了确保
+                // opacity:1 已经 flush 成新的 before-change style，恢复时不会倒着跑一遍
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () { firstSlide.style.transition = ''; });
+                });
+            }
+
+            // 断点跨过 1024px 时，另一侧那组还没有实例化过的 active，需要补上
+            if (window.matchMedia) {
+                var lgQuery = window.matchMedia('(min-width: 1024px)');
+                var onBreakpointChange = function () {
+                    var s = getVisibleSlides();
+                    if (!s.length) return;
+                    var hasActive = false;
+                    for (var i = 0; i < s.length; i++) {
+                        if (s[i].classList.contains('active')) { hasActive = true; break; }
+                    }
+                    if (!hasActive) s[0].classList.add('active');
+                    var idx = getCurrentIndex(s);
+                    materialize(s[idx], false);
+                    if (isCarouselEnabled()) materializeAhead(s, idx);
+                };
+                if (lgQuery.addEventListener) lgQuery.addEventListener('change', onBreakpointChange);
+                else if (lgQuery.addListener) lgQuery.addListener(onBreakpointChange);
+            }
+
+            // 空闲时预取下一张（轮播关掉时其余图片永远不会显示，一张都不下）
+            if (isCarouselEnabled()) {
+                var schedulePrefetch = function () {
+                    var idle = window.requestIdleCallback || function (cb) { return setTimeout(cb, 1500); };
+                    idle(function () { materializeAhead(getVisibleSlides(), startIdx); });
+                };
+                if (document.readyState === 'complete') schedulePrefetch();
+                else window.addEventListener('load', schedulePrefetch, { once: true });
             }
 
             // 启动
             if (isCarouselEnabled() && isBannerWallpaperMode()) {
                 startAutoPlay();
+            }
+        })();
+    </script>
+    )}
+
+    <!-- 单图模式：只实例化当前断点匹配的那一侧 -->
+    {!hasMultipleImages && (
+    <script is:inline data-swup-ignore-script>
+        (function initBannerSingle() {
+            var container = document.getElementById('banner-images-container');
+            if (!container) return;
+
+            function materialize(slot, high) {
+                var tpl = slot.querySelector('template');
+                if (!tpl) return;
+                var frag = tpl.content.cloneNode(true);
+                var img = frag.querySelector('img');
+                var phFrag = frag.querySelector('.lqip-placeholder');
+                if (img && high) {
+                    img.setAttribute('fetchpriority', 'high');
+                    // 这张是 LCP 元素，不做淡入：图片没下完时 <img> 本来就不画东西，
+                    // 那 500ms 过渡只是把已经能看的画面又藏半秒，Chrome 会把 LCP 往后记。
+                    img.classList.remove('opacity-0', 'transition-opacity', 'duration-500', 'ease-out');
+                    img.style.opacity = '1';
+                    // LQIP 占位层盖在 img 上面（z-index:0），它那 0.5s 淡出同样会挡住 LCP
+                    if (phFrag) phFrag.style.transition = 'none';
+                }
+                slot.appendChild(frag);
+                tpl.remove();
+                // Layout 的全局淡入只扫解析期的图片，克隆进来的要自己接管
+                var ph = slot.querySelector('.lqip-placeholder');
+                if (!img) return;
+                function done() {
+                    img.style.opacity = '1';
+                    if (ph) ph.classList.add('loaded');
+                }
+                if (img.complete && img.naturalWidth > 0) done();
+                else {
+                    img.addEventListener('load', done, { once: true });
+                    img.addEventListener('error', function () {
+                        if (ph) ph.classList.add('loaded');
+                    }, { once: true });
+                }
+            }
+
+            function sync() {
+                var all = container.querySelectorAll('.banner-image-slot');
+                var isLg = window.innerWidth >= 1024;
+                for (var i = 0; i < all.length; i++) {
+                    var el = all[i];
+                    if (isLg && el.classList.contains('lg:hidden')) continue;
+                    if (!isLg && el.classList.contains('hidden') && !el.classList.contains('lg:hidden')) continue;
+                    materialize(el, true);
+                }
+            }
+
+            sync();
+
+            if (window.matchMedia) {
+                var lgQuery = window.matchMedia('(min-width: 1024px)');
+                if (lgQuery.addEventListener) lgQuery.addEventListener('change', sync);
+                else if (lgQuery.addListener) lgQuery.addListener(sync);
             }
         })();
     </script>
@@ -694,35 +937,62 @@ const hasMultipleImages =
                     <div class="banner-post-title font-bold text-white leading-tight">
                         {bannerPostMeta.title}
                     </div>
-                    <div class="banner-post-meta-list flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-white/90 text-sm md:text-base">
-                        <span class="inline-flex items-center gap-1.5">
-                            <Icon is:inline name="material-symbols:calendar-month-outline-rounded" class="text-[1.05em]" />
-                            <span>{i18n(I18nKey.publishedAt)} {formatDateToYYYYMMDD(bannerPostMeta.published)}</span>
-                        </span>
-                        {bannerPostMeta.updated &&
-                            bannerPostMeta.updated.getTime() !== bannerPostMeta.published.getTime() && (
+                    {bannerPostInfoMode === "description" && bannerPostMeta.description && (
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="banner-post-description-divider h-px w-12 bg-white/60"></div>
+                            <div
+                                class="banner-post-description text-left text-white/85"
+                                style={bannerDescriptionWidth
+                                    ? `--banner-post-description-width: ${bannerDescriptionWidth}`
+                                    : undefined}
+                            >
+                                <Icon
+                                    is:inline
+                                    name="material-symbols:format-quote-rounded"
+                                    class="banner-post-description-quote banner-post-description-quote-start"
+                                    aria-hidden="true"
+                                />
+                                {bannerPostMeta.description}
+                                <Icon
+                                    is:inline
+                                    name="material-symbols:format-quote-rounded"
+                                    class="banner-post-description-quote banner-post-description-quote-end"
+                                    aria-hidden="true"
+                                />
+                            </div>
+                        </div>
+                    )}
+                    {bannerPostInfoMode === "meta" && (
+                        <div class="banner-post-meta-list flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-white/90 text-sm md:text-base">
+                            <span class="inline-flex items-center gap-1.5">
+                                <Icon is:inline name="material-symbols:calendar-month-outline-rounded" class="text-[1.05em]" />
+                                <span>{i18n(I18nKey.publishedAt)} {formatDateToYYYYMMDD(bannerPostMeta.published)}</span>
+                            </span>
+                            {bannerPostMeta.updated &&
+                                bannerPostMeta.updated.getTime() !== bannerPostMeta.published.getTime() && (
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <Icon is:inline name="material-symbols:update-rounded" class="text-[1.05em]" />
+                                        <span>{i18n(I18nKey.updatedAt)} {formatDateToYYYYMMDD(bannerPostMeta.updated)}</span>
+                                    </span>
+                                )}
+                            {typeof bannerPostMeta.words === "number" && (
                                 <span class="inline-flex items-center gap-1.5">
-                                    <Icon is:inline name="material-symbols:update-rounded" class="text-[1.05em]" />
-                                    <span>{i18n(I18nKey.updatedAt)} {formatDateToYYYYMMDD(bannerPostMeta.updated)}</span>
+                                    <Icon is:inline name="material-symbols:ink-pen-outline-rounded" class="text-[1.05em]" />
+                                    <span>
+                                        {bannerPostMeta.words} {i18n(bannerPostMeta.words === 1 ? I18nKey.wordCount : I18nKey.wordsCount)}
+                                    </span>
                                 </span>
                             )}
-                        {typeof bannerPostMeta.words === "number" && (
-                            <span class="inline-flex items-center gap-1.5">
-                                <Icon is:inline name="material-symbols:ink-pen-outline-rounded" class="text-[1.05em]" />
-                                <span>
-                                    {bannerPostMeta.words} {i18n(bannerPostMeta.words === 1 ? I18nKey.wordCount : I18nKey.wordsCount)}
+                            {typeof bannerPostMeta.minutes === "number" && (
+                                <span class="inline-flex items-center gap-1.5">
+                                    <Icon is:inline name="material-symbols:schedule-outline-rounded" class="text-[1.05em]" />
+                                    <span>
+                                        {bannerPostMeta.minutes} {i18n(bannerPostMeta.minutes === 1 ? I18nKey.minuteCount : I18nKey.minutesCount)} · {i18n(I18nKey.readTime)}
+                                    </span>
                                 </span>
-                            </span>
-                        )}
-                        {typeof bannerPostMeta.minutes === "number" && (
-                            <span class="inline-flex items-center gap-1.5">
-                                <Icon is:inline name="material-symbols:schedule-outline-rounded" class="text-[1.05em]" />
-                                <span>
-                                    {bannerPostMeta.minutes} {i18n(bannerPostMeta.minutes === 1 ? I18nKey.minuteCount : I18nKey.minutesCount)} · {i18n(I18nKey.readTime)}
-                                </span>
-                            </span>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -830,6 +1100,7 @@ const hasMultipleImages =
                                     side={effectiveIsBothSidebars ? "left" : undefined}
                                     class={sidebarClass}
                                     headings={headings}
+                                    encrypted={encrypted}
                                 />
                             )}
                         </div>
@@ -841,7 +1112,7 @@ const hasMultipleImages =
             ) : (
                 <div id="left-sidebar-dynamic" class="contents transition-swup-fade">
                     {effectiveIsBothSidebars && effectiveHasLeftComponents && (
-						<SideBar side="left" class={sidebarClass} headings={headings}></SideBar>
+						<SideBar side="left" class={sidebarClass} headings={headings} encrypted={encrypted}></SideBar>
                     )}
                 </div>
             )}
@@ -878,7 +1149,7 @@ const hasMultipleImages =
                     {sidebarLayoutConfig.enable ? (
                         <div id="right-sidebar-static" class="contents" data-hide-sidebar-on-post={hideSidebarOnPostPage ? "true" : "false"}>
                             {(effectiveIsBothSidebars || sidebarLayoutConfig.position === "right") && effectiveHasRightComponents && (
-								<SideBar side="right" class={rightSidebarClass} headings={headings}></SideBar>
+								<SideBar side="right" class={rightSidebarClass} headings={headings} encrypted={encrypted}></SideBar>
                             )}
                         </div>
                     ) : (
@@ -889,7 +1160,7 @@ const hasMultipleImages =
             ) : (
                 <div id="right-sidebar-dynamic" class="contents transition-swup-fade">
                     {effectiveIsBothSidebars && effectiveHasRightComponents && (
-						<SideBar side="right" class={rightSidebarClass} headings={headings}></SideBar>
+						<SideBar side="right" class={rightSidebarClass} headings={headings} encrypted={encrypted}></SideBar>
                     )}
                 </div>
             )}
@@ -897,7 +1168,7 @@ const hasMultipleImages =
             {/* 移动端底部组件 - 768px及以下显示 */}
             {sidebarLayoutConfig.mobileBottomComponents && sidebarLayoutConfig.mobileBottomComponents.length > 0 && (
                 <div id="mobile-bottom-sidebar" class="col-span-1 block md:hidden mt-4">
-					<SideBar side="bottom" headings={headings}></SideBar>
+					<SideBar side="bottom" headings={headings} encrypted={encrypted}></SideBar>
                 </div>
             )}
 
@@ -911,7 +1182,39 @@ const hasMultipleImages =
     </div>
 </div>
 
-<FloatingControls headings={headings} />
+<FloatingControls headings={headings} encrypted={encrypted} />
+
+<!--
+    触屏设备上让代码块的复制按钮默认隐藏，点一下代码块才显形。
+    expressive-code 没给 <pre> 加 tabindex，点击代码区不会产生焦点，
+    所以纯 CSS 的 :focus-within 拿不到这个状态，只能在这里补一个类。
+    显隐规则见 src/styles/expressive-code.css 的 @media (hover: none) 段。
+-->
+<script is:inline data-swup-ignore-script>
+    (function initTouchCodeCopyReveal() {
+        var CLASS = 'ff-copy-revealed';
+
+        // 委托到 document，swup 换页后无需重新绑定
+        document.addEventListener('click', function (event) {
+            // 有 hover 能力的设备走 CSS 的悬停显形逻辑，不需要打标记。
+            // 放在处理函数里判断，混合输入设备切换输入方式后也能跟上
+            if (window.matchMedia('(hover: hover)').matches) return;
+
+            var target = event.target;
+            if (!target || !target.closest) return;
+
+            var frame = target.closest('.expressive-code .frame');
+
+            // 点到别处就收起之前展开的按钮
+            document.querySelectorAll('.' + CLASS).forEach(function (revealed) {
+                if (revealed !== frame) revealed.classList.remove(CLASS);
+            });
+
+            // 点在复制按钮上时说明它已经显形，交给原生逻辑处理即可
+            if (frame && !target.closest('.copy')) frame.classList.add(CLASS);
+        });
+    })();
+</script>
 
 
 </Layout>
@@ -933,4 +1236,3 @@ const hasMultipleImages =
   }
 
 </style>
-
