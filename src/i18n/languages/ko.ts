@@ -26,6 +26,7 @@ export const ko: Translation = {
 	[Key.categories]: "카테고리",
 	[Key.allCategories]: "모든 카테고리",
 	[Key.allTags]: "모든 태그",
+	[Key.allSeries]: "모든 시리즈",
 	[Key.recentPosts]: "최근 게시글",
 	[Key.postList]: "게시글 목록",
 	[Key.tableOfContents]: "목차",
@@ -348,6 +349,13 @@ export const ko: Translation = {
 	[Key.noRelatedPosts]: "관련 게시글이 없습니다",
 	[Key.noRandomPosts]: "무작위 게시글이 없습니다",
 
+	// 글 시리즈
+	[Key.series]: "시리즈",
+	[Key.seriesPartOf]: "시리즈의 일부",
+	[Key.seriesPart]: "파트 {n}",
+	[Key.seriesThisArticle]: "이 글",
+	[Key.noSeries]: "시리즈가 없습니다",
+
 	// Encrypted
 	[Key.postEncrypted]: "이 게시글은 암호화되어 있습니다",
 
@@ -355,6 +363,9 @@ export const ko: Translation = {
 	[Key.wallpaperMode]: "배경화면 모드",
 	[Key.wallpaperBannerMode]: "배너 배경화면",
 	[Key.wallpaperFullscreenMode]: "전체화면 배경화면",
+	[Key.fullscreenLayout]: "전체화면 레이아웃",
+	[Key.fullscreenClassicLayout]: "클래식",
+	[Key.fullscreenHeroLayout]: "히어로",
 	[Key.wallpaperOverlayMode]: "오버레이 배경화면",
 	[Key.wallpaperNoneMode]: "배경화면 없음",
 
@@ -497,4 +508,11 @@ export const ko: Translation = {
 	[Key.videoPrev]: "이전 영상",
 	[Key.videoNext]: "다음 영상",
 	[Key.videoLoadError]: "영상을 불러오지 못했습니다",
+
+	// 몰입형 읽기
+	[Key.immersiveReading]: "몰입형 읽기",
+	[Key.enterImmersiveReading]: "몰입형 읽기 시작",
+	[Key.exitImmersiveReading]: "몰입형 읽기 종료",
+	[Key.tocExpand]: "목차 펼치기",
+	[Key.tocCollapse]: "목차 접기",
 };

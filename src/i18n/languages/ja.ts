@@ -26,6 +26,7 @@ export const ja: Translation = {
 	[Key.categories]: "カテゴリ",
 	[Key.allCategories]: "すべてのカテゴリ",
 	[Key.allTags]: "すべてのタグ",
+	[Key.allSeries]: "すべてのシリーズ",
 	[Key.recentPosts]: "最近の投稿",
 	[Key.postList]: "投稿リスト",
 	[Key.tableOfContents]: "目次",
@@ -348,6 +349,13 @@ export const ja: Translation = {
 	[Key.noRelatedPosts]: "関連記事がありません",
 	[Key.noRandomPosts]: "ランダム記事がありません",
 
+	// 記事シリーズ
+	[Key.series]: "シリーズ",
+	[Key.seriesPartOf]: "シリーズの一部",
+	[Key.seriesPart]: "パート {n}",
+	[Key.seriesThisArticle]: "この記事",
+	[Key.noSeries]: "シリーズはありません",
+
 	// 暗号化
 	[Key.postEncrypted]: "この記事は暗号化されています",
 
@@ -355,6 +363,9 @@ export const ja: Translation = {
 	[Key.wallpaperMode]: "壁紙モード",
 	[Key.wallpaperBannerMode]: "バナー壁紙",
 	[Key.wallpaperFullscreenMode]: "フルスクリーン壁紙",
+	[Key.fullscreenLayout]: "フルスクリーンレイアウト",
+	[Key.fullscreenClassicLayout]: "クラシック",
+	[Key.fullscreenHeroLayout]: "ヒーロー",
 	[Key.wallpaperOverlayMode]: "透明",
 	[Key.wallpaperNoneMode]: "単色背景",
 
@@ -498,4 +509,11 @@ export const ja: Translation = {
 	[Key.videoPrev]: "前の動画",
 	[Key.videoNext]: "次の動画",
 	[Key.videoLoadError]: "動画の読み込みに失敗しました",
+
+	// 没入型リーディング
+	[Key.immersiveReading]: "没入型リーディング",
+	[Key.enterImmersiveReading]: "没入型リーディングに入る",
+	[Key.exitImmersiveReading]: "没入型リーディングを終了する",
+	[Key.tocExpand]: "目錄を開く",
+	[Key.tocCollapse]: "目錄をたたむ",
 };

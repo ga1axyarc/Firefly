@@ -26,6 +26,7 @@ export const en: Translation = {
 	[Key.categories]: "Categories",
 	[Key.allCategories]: "All Categories",
 	[Key.allTags]: "All Tags",
+	[Key.allSeries]: "All Series",
 	[Key.recentPosts]: "Recent Posts",
 	[Key.postList]: "Post List",
 	[Key.tableOfContents]: "Table of Contents",
@@ -350,6 +351,13 @@ export const en: Translation = {
 	[Key.noRelatedPosts]: "No related posts",
 	[Key.noRandomPosts]: "No random posts",
 
+	// Article Series
+	[Key.series]: "Series",
+	[Key.seriesPartOf]: "Part of series",
+	[Key.seriesPart]: "Part {n}",
+	[Key.seriesThisArticle]: "This article",
+	[Key.noSeries]: "No series yet",
+
 	// Encrypted
 	[Key.postEncrypted]: "This post is encrypted",
 
@@ -357,6 +365,9 @@ export const en: Translation = {
 	[Key.wallpaperMode]: "Wallpaper Mode",
 	[Key.wallpaperBannerMode]: "Banner Wallpaper",
 	[Key.wallpaperFullscreenMode]: "Fullscreen Wallpaper",
+	[Key.fullscreenLayout]: "Fullscreen Layout",
+	[Key.fullscreenClassicLayout]: "Classic",
+	[Key.fullscreenHeroLayout]: "Hero",
 	[Key.wallpaperOverlayMode]: "Overlay Wallpaper",
 	[Key.wallpaperNoneMode]: "None Wallpaper",
 
@@ -500,4 +511,11 @@ export const en: Translation = {
 	[Key.videoPrev]: "Previous video",
 	[Key.videoNext]: "Next video",
 	[Key.videoLoadError]: "Video failed to load",
+
+	// Immersive Reading
+	[Key.immersiveReading]: "Immersive Reading",
+	[Key.enterImmersiveReading]: "Enter Immersive Reading",
+	[Key.exitImmersiveReading]: "Exit Immersive Reading",
+	[Key.tocExpand]: "Expand directory",
+	[Key.tocCollapse]: "Collapse directory",
 };

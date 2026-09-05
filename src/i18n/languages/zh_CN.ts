@@ -26,6 +26,7 @@ export const zh_CN: Translation = {
 	[Key.categories]: "分类",
 	[Key.allCategories]: "全部分类",
 	[Key.allTags]: "全部标签",
+	[Key.allSeries]: "全部系列",
 	[Key.recentPosts]: "最新文章",
 	[Key.postList]: "文章列表",
 	[Key.tableOfContents]: "文章目录",
@@ -341,6 +342,13 @@ export const zh_CN: Translation = {
 	[Key.noRelatedPosts]: "暂无相关文章",
 	[Key.noRandomPosts]: "暂无随机文章",
 
+	// 文章系列
+	[Key.series]: "系列",
+	[Key.seriesPartOf]: "所属系列",
+	[Key.seriesPart]: "第 {n} 篇",
+	[Key.seriesThisArticle]: "本文",
+	[Key.noSeries]: "暂无系列",
+
 	// 加密
 	[Key.postEncrypted]: "本文已加密",
 
@@ -348,6 +356,9 @@ export const zh_CN: Translation = {
 	[Key.wallpaperMode]: "壁纸模式",
 	[Key.wallpaperBannerMode]: "横幅壁纸",
 	[Key.wallpaperFullscreenMode]: "全屏壁纸",
+	[Key.fullscreenLayout]: "全屏布局",
+	[Key.fullscreenClassicLayout]: "经典模式",
+	[Key.fullscreenHeroLayout]: "Hero 模式",
 	[Key.wallpaperOverlayMode]: "覆盖透明",
 	[Key.wallpaperNoneMode]: "纯色背景",
 
@@ -488,4 +499,11 @@ export const zh_CN: Translation = {
 	[Key.videoPrev]: "上一个视频",
 	[Key.videoNext]: "下一个视频",
 	[Key.videoLoadError]: "视频加载失败",
+
+	// 沉浸阅读
+	[Key.immersiveReading]: "沉浸阅读",
+	[Key.enterImmersiveReading]: "进入沉浸阅读",
+	[Key.exitImmersiveReading]: "退出沉浸阅读",
+	[Key.tocExpand]: "展开目录",
+	[Key.tocCollapse]: "折叠目录",
 };
